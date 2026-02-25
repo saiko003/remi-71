@@ -4,84 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>REMI 71 PRO</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>REMI 71</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        :root { --red: #ff3b30; --felt: #076324; --gold: #ffcc00; }
+        :root { --red: #ff3b30; --felt: #076324; --gold: #ffcc00; --card-white: #ffffff; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        
         body { 
-            margin: 0; background: #000; font-family: sans-serif; 
+            margin: 0; background: #000; font-family: -apple-system, sans-serif; 
             height: 100vh; display: flex; overflow: hidden; color: white;
         }
 
-        /* Pamja Landscape */
+        /* Fusha e Lojës */
         .game-container { 
             flex: 1; position: relative; background: radial-gradient(circle, var(--felt) 0%, #032d10 100%);
-            margin: 10px; border-radius: 30px; border: 3px solid #043d16;
+            margin: 10px; border-radius: 25px; border: 4px solid #043d16;
             display: flex; flex-direction: column; justify-content: space-between; padding: 15px;
         }
 
+        /* Paneli Anash */
         .sidebar { 
-            width: 130px; background: #1c1c1e; display: flex; flex-direction: column; 
-            gap: 8px; padding: 10px; border-left: 1px solid #333;
+            width: 140px; background: #1c1c1e; display: flex; flex-direction: column; 
+            gap: 10px; padding: 15px; border-left: 1px solid #333; justify-content: center;
         }
 
-        .card-slot { display: flex; gap: 5px; justify-content: center; min-height: 80px; flex-wrap: wrap; }
+        /* Letrat */
+        .card-slot { display: flex; gap: 6px; justify-content: center; min-height: 90px; flex-wrap: wrap; }
         
         .card { 
-            width: 50px; height: 75px; background: white; border-radius: 5px; color: black;
+            width: 55px; height: 85px; background: var(--card-white); border-radius: 6px; color: black;
             font-weight: bold; display: flex; flex-direction: column; justify-content: space-between;
-            padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); font-size: 14px;
+            padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-size: 15px; transition: transform 0.2s;
         }
+        .card:active { transform: translateY(-10px); }
         .card.red { color: var(--red); }
 
         .toka { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80px; height: 110px; border: 2px dashed rgba(255,255,255,0.2);
-            display: flex; justify-content: center; align-items: center; border-radius: 10px;
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            width: 90px; height: 120px; border: 2px dashed rgba(255,255,255,0.2);
+            display: flex; justify-content: center; align-items: center; border-radius: 12px;
         }
 
+        /* Butonat */
         .btn { 
-            padding: 10px; border: none; border-radius: 8px; color: white; 
-            font-weight: bold; font-size: 11px; cursor: pointer; text-align: center;
+            padding: 12px; border: none; border-radius: 10px; color: white; 
+            font-weight: bold; font-size: 12px; cursor: pointer; text-align: center;
+            box-shadow: 0 4px #999;
         }
+        .btn:active { box-shadow: 0 2px #666; transform: translateY(2px); }
         .btn-green { background: #34c759; }
         .btn-blue { background: #007aff; }
         .btn-orange { background: #ff9500; }
 
-        #status-bar { font-size: 10px; color: var(--gold); text-align: center; margin-bottom: 5px; text-transform: uppercase; }
-        
-        @media screen and (orientation: portrait) {
-            #rotate-notice { display: flex; }
+        #status-bar { 
+            font-size: 11px; color: var(--gold); text-align: center; 
+            margin-bottom: 10px; font-weight: bold; background: #333; padding: 5px; border-radius: 5px;
         }
+        
+        /* Notice për rrotullim telefoni */
+        @media screen and (orientation: portrait) { #rotate-notice { display: flex; } }
         #rotate-notice { 
-            display: none; position: fixed; inset: 0; background: #000; z-index: 1000;
-            flex-direction: column; justify-content: center; align-items: center;
+            display: none; position: fixed; inset: 0; background: #111; z-index: 9999;
+            flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px;
         }
     </style>
 </head>
 <body>
 
     <div id="rotate-notice">
-        <h2 style="color: white;">🔄 Ktheje telefonin anash</h2>
+        <h1 style="font-size: 50px;">🔄</h1>
+        <h2>Ktheje telefonin ANASH (Landscape)</h2>
+        <p>Për të filluar lojën Remi 71</p>
     </div>
 
     <div class="game-container">
         <div class="card-slot" id="oponent-hand">
-            <div id="oponent-msg" style="font-size: 12px; opacity: 0.5;">Duke pritur kundërshtarin...</div>
+            <div id="oponent-msg" style="font-size: 14px; opacity: 0.6; margin-top: 20px;">Duke pritur kundërshtarin...</div>
         </div>
 
-        <div class="toka" id="toka-display"></div>
+        <div class="toka" id="toka-display">
+            <div style="font-size: 10px; opacity: 0.3;">TOKA</div>
+        </div>
 
         <div class="card-slot" id="my-hand"></div>
     </div>
 
     <div class="sidebar">
-        <div id="status-bar">Lidhja: Duke pritur...</div>
+        <div id="status-bar">LIDHJA...</div>
         <button class="btn btn-green" onclick="krijoDhomen()">KRIJO</button>
         <button class="btn btn-blue" onclick="futuDhomen()">BASHKOHU</button>
-        <hr style="width:100%; opacity: 0.2;">
+        <hr style="width:100%; opacity: 0.1; margin: 5px 0;">
         <button class="btn btn-orange" onclick="merrLeter()">MERR LETËR</button>
-        <button class="btn" style="background: #555;" onclick="renditDoren()">RENDIT</button>
+        <button class="btn" style="background: #444;" onclick="renditDoren()">RENDIT</button>
     </div>
 
     <script>
@@ -90,6 +105,11 @@
         let dora = [];
         const simbolet = ['♥', '♦', '♣', '♠'];
         const vlerat = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // Kur lidhemi me serverin
+        socket.on('connect', () => {
+            document.getElementById('status-bar').innerText = "ONLINE ✅";
+        });
 
         function krijoDhomen() {
             roomID = Math.floor(1000 + Math.random() * 9000);
@@ -107,27 +127,27 @@
         }
 
         socket.on('player-count', (count) => {
+            const status = document.getElementById('status-bar');
             if(count === 2) {
-                document.getElementById('status-bar').innerText = "LOJA FILLOI!";
-                document.getElementById('oponent-msg').innerText = "Lojtari 2 është gati";
+                status.innerText = "LOJA FILLOI! 🚀";
+                status.style.color = "#34c759";
+                document.getElementById('oponent-msg').innerText = "Kundërshtari u lidh";
                 filloLoje();
-            } else {
-                document.getElementById('status-bar').innerText = "Duke pritur shokun...";
+            } else if (roomID) {
+                status.innerText = "KODI: " + roomID;
             }
         });
 
         function filloLoje() {
-            if(dora.length > 0) return; // Mos e rifillo nese kemi letra
-            for(let i=0; i<10; i++) {
-                shtoLeterDores();
-            }
+            if(dora.length > 0) return; 
+            for(let i=0; i<10; i++) { shtoLeterDores(); }
             updateUI();
         }
 
         function shtoLeterDores() {
             const v = vlerat[Math.floor(Math.random()*vlerat.length)];
             const s = simbolet[Math.floor(Math.random()*simbolet.length)];
-            dora.push({ v, s, color: (s === '♥' || s === '♦') ? 'red' : 'white' });
+            dora.push({ v, s, color: (s === '♥' || s === '♦') ? 'red' : 'black' });
         }
 
         function updateUI() {
@@ -136,13 +156,14 @@
             dora.forEach((card, index) => {
                 const c = document.createElement('div');
                 c.className = `card ${card.color === 'red' ? 'red' : ''}`;
-                c.innerHTML = `<div>${card.v}</div><div style="font-size:20px; align-self:center;">${card.s}</div><div style="text-align:right">${card.v}</div>`;
+                c.innerHTML = `<div>${card.v}</div><div style="font-size:24px; align-self:center;">${card.s}</div><div style="text-align:right">${card.v}</div>`;
                 c.onclick = () => hidhLetren(index);
                 handDiv.appendChild(c);
             });
         }
 
         function hidhLetren(index) {
+            if(!roomID) return;
             const leter = dora.splice(index, 1)[0];
             socket.emit('hidh-leter', { roomID, leter });
             shfaqNeToke(leter);
@@ -156,7 +177,7 @@
         }
 
         function renditDoren() {
-            dora.sort((a, b) => vlerat.indexOf(a.v) - vlerat.indexOf(b.v));
+            dora.sort((a, b) => simbolet.indexOf(a.s) - simbolet.indexOf(b.s) || vlerat.indexOf(a.v) - vlerat.indexOf(b.v));
             updateUI();
         }
 
@@ -169,7 +190,7 @@
             toka.innerHTML = `
                 <div class="card ${leter.color === 'red' ? 'red' : ''}">
                     <div>${leter.v}</div>
-                    <div style="font-size:20px; align-self:center;">${leter.s}</div>
+                    <div style="font-size:24px; align-self:center;">${leter.s}</div>
                     <div style="text-align:right">${leter.v}</div>
                 </div>`;
         }
