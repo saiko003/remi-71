@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>REMI 71 PRO - FIXED</title>
+    <title>REMI 71 PRO - TURN FIXED</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         :root { --red: #ff3b30; --felt: #076324; --gold: #ffcc00; }
@@ -20,7 +20,8 @@
         .turqia-top { position: absolute; z-index: 2; width: 72px; height: 48px; background: linear-gradient(135deg, #1a2a6c, #b21f1f); border: 2px solid white; border-radius: 5px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
 
         .player-label { background: rgba(0,0,0,0.7); padding: 4px 15px; border-radius: 20px; font-size: 12px; border: 1px solid var(--gold); color: var(--gold); margin-bottom: 8px; font-weight: bold; }
-        .card { width: 48px; height: 72px; background: white; border-radius: 6px; color: black; font-weight: bold; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; font-size: 13px; }
+        .card { width: 48px; height: 72px; background: white; border-radius: 6px; color: black; font-weight: bold; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; font-size: 13px; transition: transform 0.2s; }
+        .card:active { transform: scale(1.1); }
         .card.red { color: var(--red); }
         .card.xhoker { background: var(--gold); border: 2px solid #e67e22; }
         .card-slot { display: flex; gap: 4px; justify-content: center; min-height: 80px; flex-wrap: wrap; }
@@ -123,16 +124,22 @@
             document.getElementById('main-toka').style.display = "flex";
             
             eshteRadhaIme = (socket.id === data.starterId);
-            mundTeMerrLeter = !eshteRadhaIme; 
+            // Admini (starter) ka 11 letra, nuk merr dot ne fillim.
+            // Lojtari tjeter ka 10, pret radhen per te marre.
+            mundTeMerrLeter = false; 
 
             filloLoje(eshteRadhaIme);
             ndryshoStatusin();
         });
 
         socket.on('ndrro-radhen', (data) => {
-            eshteRadhaIme = (socket.id === data.nextTurn);
-            mundTeMerrLeter = eshteRadhaIme;
-            ndryshoStatusin();
+            if (socket.id === data.nextTurn) {
+                eshteRadhaIme = true;
+                mundTeMerrLeter = true; // Mund te marre leter tani
+                if (navigator.vibrate) navigator.vibrate(100); 
+                ndryshoStatusin();
+                updateUI(); // Fresko butonin Jackpot
+            }
         });
 
         function ndryshoStatusin() {
@@ -174,11 +181,13 @@
                 handDiv.appendChild(c);
             });
             socket.emit('update-card-count', { roomID, count: dora.length });
+            // Shfaq butonin Jackpot vetem nese eshte radha jote, s'ke marre leter dhe i ke 10 letra
             document.getElementById('btn-jackpot').style.display = (dora.length === 10 && eshteRadhaIme && mundTeMerrLeter) ? "block" : "none";
         }
 
         function merrLeter() {
-            if(!eshteRadhaIme || !mundTeMerrLeter) return;
+            if(!eshteRadhaIme) return alert("Prit radhën! 🔴");
+            if(!mundTeMerrLeter) return alert("Hidh një letër! 🃏");
             shtoLeter();
             mundTeMerrLeter = false;
             updateUI();
@@ -190,8 +199,11 @@
             if(dora[index].isXhoker) return alert("Xhokeri nuk hidhet!");
             
             const leter = dora.splice(index, 1)[0];
-            socket.emit('hidh-leter', { roomID, leter });
+            socket.emit('hidh-leter', { roomID: roomID, leter: leter });
             shfaqNeToke(leter);
+            
+            eshteRadhaIme = false; // Bllokohet menjehere
+            ndryshoStatusin();
             updateUI();
         }
 
