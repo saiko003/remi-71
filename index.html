@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>REMI 71 - VERSIONI FINAL</title>
+    <title>REMI 71 - ULTIMATE</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         :root { --red: #ff3b30; --felt: #076324; --gold: #ffcc00; }
@@ -11,48 +11,37 @@
         body { margin: 0; background: #000; font-family: -apple-system, sans-serif; height: 100vh; display: flex; overflow: hidden; color: white; }
         
         .game-container { flex: 1; position: relative; background: radial-gradient(circle, var(--felt) 0%, #032d10 100%); margin: 10px; border-radius: 25px; border: 4px solid #043d16; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; }
-        
         .sidebar { width: 160px; background: #1c1c1e; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-left: 1px solid #333; justify-content: center; }
 
+        /* Letrat e kundershtarit (mbrapsht) */
+        .oponent-slot { display: flex; gap: -20px; justify-content: center; min-height: 60px; transform: scale(0.8); }
+        .card-small { width: 40px; height: 60px; background: linear-gradient(135deg, #1a2a6c, #b21f1f); border: 1px solid white; border-radius: 4px; margin-left: -15px; box-shadow: 2px 0 5px rgba(0,0,0,0.3); }
+
         .card-slot { display: flex; gap: 4px; justify-content: center; min-height: 85px; flex-wrap: wrap; }
-        
-        .card { width: 50px; height: 75px; background: white; border-radius: 6px; color: black; font-weight: bold; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; box-shadow: 0 3px 6px rgba(0,0,0,0.4); font-size: 14px; position: relative; }
+        .card { width: 48px; height: 72px; background: white; border-radius: 6px; color: black; font-weight: bold; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; box-shadow: 0 3px 6px rgba(0,0,0,0.4); font-size: 13px; position: relative; cursor: pointer; }
         .card.red { color: var(--red); }
         .card.back { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); border: 2px solid white; }
         .card.xhoker { background: var(--gold); border: 2px solid #e67e22; box-shadow: 0 0 12px var(--gold); }
 
         .toka-center { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 30px; }
-        
         .stiva-wrapper { position: relative; width: 60px; height: 85px; cursor: pointer; }
-        .jackpot-under { position: absolute; top: 12px; left: 12px; z-index: 1; transform: rotate(-10deg); opacity: 0.9; border: 2px solid var(--gold); }
-        .turqia-top { position: absolute; top: 0; left: 0; z-index: 2; transition: transform 0.1s; }
-        .turqia-top:active { transform: scale(0.95); }
+        .jackpot-under { position: absolute; top: 12px; left: 12px; z-index: 1; transform: rotate(-10deg); opacity: 0.9; border: 1px solid var(--gold); }
+        .turqia-top { position: absolute; top: 0; left: 0; z-index: 2; }
 
         .btn { padding: 10px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 10px; cursor: pointer; text-align: center; box-shadow: 0 3px #000; text-transform: uppercase; }
-        .btn:active { transform: translateY(2px); box-shadow: 0 1px #000; }
-        
-        #room-display { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; text-align: center;
-            border: 3px solid var(--gold); z-index: 1000; min-width: 250px;
-        }
-
-        #status-bar { font-size: 11px; color: var(--gold); text-align: center; margin-bottom: 5px; background: #222; padding: 6px; border-radius: 5px; border: 1px solid #444; }
+        #room-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 30px; border-radius: 20px; text-align: center; border: 3px solid var(--gold); z-index: 1000; min-width: 250px; }
     </style>
 </head>
 <body>
 
     <div class="game-container">
         <div id="room-overlay" style="display:none;">
-            <div id="room-display">
-                <h3 style="margin:0; color:var(--gold); letter-spacing: 2px;">KODI DHOMËS</h3>
-                <h1 id="big-room-id" style="font-size:50px; margin:15px 0; font-family: monospace;">----</h1>
-                <p id="player-status" style="font-size:12px; opacity:0.7;">Duke pritur lojtarët (min. 2)...</p>
-                <button id="btn-start-game" class="btn" style="background:#34c759; display:none; width:100%; font-size:14px; padding:15px;" onclick="nisLojen()">NIS LOJËN 🚀</button>
-            </div>
+            <h3 style="color:var(--gold);">KODI I DHOMËS:</h3>
+            <h1 id="big-room-id" style="font-size:50px; margin:10px 0;">----</h1>
+            <button id="btn-start-game" class="btn" style="background:#34c759; display:none; width:100%; font-size:14px;" onclick="nisLojen()">NIS LOJËN 🚀</button>
         </div>
 
-        <div class="card-slot" id="oponent-hand"></div>
+        <div class="oponent-slot" id="oponent-hand"></div>
         
         <div class="toka-center" id="main-toka" style="display:none;">
             <div class="stiva-wrapper" onclick="merrLeter()">
@@ -66,17 +55,15 @@
     </div>
 
     <div class="sidebar">
-        <div id="status-bar">REMI 71 ONLINE</div>
+        <div id="status-bar" style="font-size:11px; color:var(--gold); text-align:center;">REMI 71</div>
         <button id="btn-create" class="btn" style="background:#444" onclick="krijoDhomen()">KRIJO</button>
         <button id="btn-join" class="btn" style="background:#007aff" onclick="futuDhomen()">BASHKOHU</button>
-        
         <hr style="width:100%; opacity:0.1;">
         <button class="btn" style="background:#5856d6" onclick="renditRresht()">4-5-6</button>
         <button class="btn" style="background:#5856d6" onclick="renditGrup()">7-7-7</button>
-        
         <hr style="width:100%; opacity:0.1;">
-        <button id="btn-jackpot" class="btn" style="background:linear-gradient(to bottom, #bf953f, #fcf6ba, #b38728); color:black; display:none;" onclick="merrJackpot()">MARR JACKPOT</button>
-        <button class="btn" style="background:#eb4034" onclick="mbyllLoje()">MBYLL (71)</button>
+        <button id="btn-jackpot" class="btn" style="background:orange; color:black; display:none;" onclick="merrJackpot()">MARR JACKPOT</button>
+        <button class="btn" style="background:#eb4034" onclick="mbyllLoje()">MBYLL</button>
     </div>
 
     <script>
@@ -84,7 +71,7 @@
         let roomID = null, dora = [], jackpotLeter = null, isAdmin = false;
         const simbolet = ['♥', '♦', '♣', '♠'], vlerat = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-        // 1. Krijo Dhomen
+        // --- DHOMA ---
         function krijoDhomen() {
             roomID = Math.floor(1000 + Math.random() * 9000);
             isAdmin = true;
@@ -92,9 +79,8 @@
             shfaqOverlay(roomID);
         }
 
-        // 2. Bashkohu
         function futuDhomen() {
-            const id = prompt("Shkruaj kodin 4-shifror:");
+            const id = prompt("Kodi:");
             if(id) { roomID = id; socket.emit('join-room', id); shfaqOverlay(id); }
         }
 
@@ -105,16 +91,10 @@
             document.getElementById('btn-join').style.display = "none";
         }
 
-        // Perditësimi i lojtarëve
         socket.on('player-count', (count) => {
-            document.getElementById('status-bar').innerText = "LOJTARË: " + count;
-            if(isAdmin && count >= 2) {
-                document.getElementById('btn-start-game').style.display = "block";
-                document.getElementById('player-status').innerText = "Gati për të filluar!";
-            }
+            if(isAdmin && count >= 2) document.getElementById('btn-start-game').style.display = "block";
         });
 
-        // Nisja e lojes
         function nisLojen() { socket.emit('start-game-signal', roomID); }
 
         socket.on('game-started', () => {
@@ -123,16 +103,16 @@
             filloLoje();
         });
 
-        // Shpërndarja 9+1
+        // --- LOJA (9+1 Rregullat) ---
         function filloLoje() {
-            dora = [{ v: 'X', s: '🃏', color: 'black', isXhoker: true }]; // 1 Xhoker fiks
-            for(let i=0; i<9; i++) { shtoLeter(); } // 9 letra tjera
+            dora = [{ v: 'X', s: '🃏', color: 'black', isXhoker: true }];
+            let limit = isAdmin ? 10 : 9; // Admini fillon me 11 (10+Xh), tjeret 10 (9+Xh)
+            for(let i=0; i<limit; i++) { shtoLeter(); }
             
-            // Jackpot-i (Vlerë random)
+            // Jackpot
             const jv = vlerat[Math.floor(Math.random()*vlerat.length)];
             const js = simbolet[Math.floor(Math.random()*simbolet.length)];
             jackpotLeter = { v: jv, s: js, color: (js==='♥'||js==='♦'?'red':'black'), isXhoker: false };
-            
             const jCard = document.getElementById('jackpot-card');
             jCard.className = `card jackpot-under ${jackpotLeter.color}`;
             jCard.innerHTML = `<div>${jv}</div><div>${js}</div>`;
@@ -155,44 +135,34 @@
                 c.onclick = () => hidhLetren(index);
                 handDiv.appendChild(c);
             });
-            // Jackpot shfaqet vetem nese i ke 9 letra (per mbyllje)
+
+            // Njofto kundershtarin per numrin e letrave
+            socket.emit('update-card-count', { roomID, count: dora.length });
             document.getElementById('btn-jackpot').style.display = (dora.length === 9) ? "block" : "none";
         }
 
+        // --- VIZUALIZIMI I KUNDERSHTARIT ---
+        socket.on('opponent-card-count', (data) => {
+            const oponentDiv = document.getElementById('oponent-hand');
+            oponentDiv.innerHTML = "";
+            for(let i=0; i<data.count; i++) {
+                const c = document.createElement('div');
+                c.className = "card-small";
+                oponentDiv.appendChild(c);
+            }
+        });
+
+        // --- VEPRIMET ---
         function merrLeter() {
-            if(dora.length >= 10) return;
+            if(dora.length >= 11) return alert("Hidh leter!");
             shtoLeter();
             updateUI();
         }
 
-        function merrJackpot() {
-            if(dora.length !== 9) return;
-            dora.push(jackpotLeter);
-            document.getElementById('jackpot-card').style.display = "none";
-            updateUI();
-        }
-
-        // Renditjet
-        function renditRresht() {
-            dora.sort((a, b) => {
-                if (a.isXhoker) return -1; if (b.isXhoker) return 1;
-                if (a.s !== b.s) return simbolet.indexOf(a.s) - simbolet.indexOf(b.s);
-                return vlerat.indexOf(a.v) - vlerat.indexOf(b.v);
-            });
-            updateUI();
-        }
-
-        function renditGrup() {
-            dora.sort((a, b) => {
-                if (a.isXhoker) return -1; if (b.isXhoker) return 1;
-                if (a.v !== b.v) return vlerat.indexOf(a.v) - vlerat.indexOf(b.v);
-                return simbolet.indexOf(a.s) - simbolet.indexOf(b.s);
-            });
-            updateUI();
-        }
-
         function hidhLetren(index) {
-            if(dora[index].isXhoker) return; // Xhokeri nuk hidhet!
+            if(dora[index].isXhoker) return alert("Xhokeri nuk hidhet!");
+            if(dora.length < 11) return alert("Merr leter ne stive!");
+            
             const leter = dora.splice(index, 1)[0];
             socket.emit('hidh-leter', { roomID, leter });
             shfaqNeToke(leter);
@@ -203,16 +173,28 @@
             const lp = document.getElementById('last-played');
             lp.style.visibility = "visible";
             lp.className = `card ${leter.color}`;
-            lp.innerHTML = `<div>${leter.v}</div><div style="font-size:22px; align-self:center;">${leter.s}</div><div style="text-align:right">${leter.v}</div>`;
+            lp.innerHTML = `<div>${leter.v}</div><div style="font-size:20px; align-self:center;">${leter.s}</div><div style="text-align:right">${leter.v}</div>`;
+        }
+
+        function merrJackpot() {
+            if(dora.length === 9) { dora.push(jackpotLeter); document.getElementById('jackpot-card').style.display="none"; updateUI(); }
+        }
+
+        function renditRresht() {
+            dora.sort((a,b) => a.isXhoker ? -1 : b.isXhoker ? 1 : simbolet.indexOf(a.s) - simbolet.indexOf(b.s) || vlerat.indexOf(a.v) - vlerat.indexOf(b.v));
+            updateUI();
+        }
+
+        function renditGrup() {
+            dora.sort((a,b) => a.isXhoker ? -1 : b.isXhoker ? 1 : vlerat.indexOf(a.v) - vlerat.indexOf(b.v) || simbolet.indexOf(a.s) - simbolet.indexOf(b.s));
+            updateUI();
         }
 
         socket.on('leter-e-hedhur', (leter) => shfaqNeToke(leter));
-
+        
         function mbyllLoje() {
-            if(dora.length !== 10) return alert("Prit deri sa t'i kesh 10 letra të lidhura!");
-            const flush = confirm("A është mbyllje me SIMBOL (Flush)?");
-            socket.emit('mbyll-lojen', { roomID, lloji: flush ? "FLUSH" : "NORMAL" });
-            alert("Mbyllja u dërgua! Kontrolloni pikët.");
+            if(dora.length === 10) alert("URIME! MBYLLJE 71!");
+            else alert("Nuk i ke 10 letra!");
         }
     </script>
 </body>
