@@ -11,16 +11,12 @@
         body { margin: 0; background: #000; font-family: sans-serif; height: 100vh; display: flex; overflow: hidden; color: white; }
         
         .game-container { flex: 1; position: relative; background: radial-gradient(circle, var(--felt) 0%, #032d10 100%); margin: 10px; border-radius: 25px; border: 4px solid #043d16; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; }
-        .sidebar { width: 150px; background: #1c1c1e; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-left: 1px solid #333; justify-content: center; }
+        .sidebar { width: 140px; background: #1c1c1e; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-left: 1px solid #333; justify-content: center; }
 
-        /* STIVA DHE JACKPOTI - RREGULLIMI VIZUAL */
         .toka-center { position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 60px; }
         .stiva-wrapper { position: relative; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         
-        /* Letra mbarë (Jackpot) - Vertikale */
         .jackpot-under { position: absolute; z-index: 1; width: 48px; height: 72px; background: white; border-radius: 5px; color: black; border: 2px solid var(--gold); display: flex; flex-direction: column; justify-content: space-between; padding: 5px; font-weight: bold; font-size: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        
-        /* Stiva (Turqia) - Horizontale përmbi */
         .turqia-top { position: absolute; z-index: 2; width: 72px; height: 48px; background: linear-gradient(135deg, #1a2a6c, #b21f1f); border: 2px solid white; border-radius: 5px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
 
         .player-label { background: rgba(0,0,0,0.7); padding: 4px 15px; border-radius: 20px; font-size: 12px; border: 1px solid var(--gold); color: var(--gold); margin-bottom: 8px; font-weight: bold; }
@@ -39,7 +35,7 @@
         <div id="room-overlay" style="position:absolute; inset:0; background:rgba(0,0,0,0.95); z-index:100; display:none; flex-direction:column; align-items:center; justify-content:center;">
             <h1 id="big-room-id" style="font-size:50px; color:var(--gold); margin:0;">----</h1>
             <p id="wait-msg">Duke pritur shokun...</p>
-            <button id="btn-start-game" class="btn" style="background:#34c759; display:none; width:200px; padding:15px;" onclick="nisLojen()">NIS LOJËN 🚀</button>
+            <button id="btn-start-game" class="btn" style="background:#34c759; display:none; width:200px; padding:15px; margin-top:20px;" onclick="nisLojen()">NIS LOJËN 🚀</button>
         </div>
 
         <div style="display:flex; flex-direction:column; align-items:center;">
@@ -69,7 +65,7 @@
         <button class="btn" style="background:#5856d6" onclick="renditRresht()">4-5-6</button>
         <button class="btn" style="background:#5856d6" onclick="renditGrup()">7-7-7</button>
         <button id="btn-jackpot" class="btn" style="background:orange; color:black; display:none; margin-top:10px;" onclick="merrJackpot()">MARR JACKPOT</button>
-        <button class="btn" style="background:#eb4034; margin-top:auto;" onclick="mbyllLoje()">MBYLL LOJEN</button>
+        <button class="btn" style="background:#eb4034; margin-top:auto;" onclick="location.reload()">DIL</button>
     </div>
 
     <script>
@@ -79,24 +75,25 @@
 
         window.onload = () => {
             emriIm = prompt("Emri yt:", "Lojtar " + Math.floor(Math.random()*100));
+            if(!emriIm) emriIm = "Lojtar";
             document.getElementById('my-name-label').innerText = emriIm;
         };
 
         function krijoDhomen() {
-            roomID = Math.floor(1000 + Math.random() * 9000);
-            // Sigurohu që po dërgon playerName si objekt!
+            roomID = Math.floor(1000 + Math.random() * 9000).toString();
             socket.emit('join-room', { roomID: roomID, playerName: emriIm });
             shfaqOverlay(roomID);
         }
 
-        ffunction futuDhomen() {
+        function futuDhomen() {
             const id = prompt("Shkruaj kodin 4-shifror:");
             if(id) { 
-                roomID = id; 
-                // Sigurohu që po dërgon playerName si objekt!
+                roomID = id.toString(); 
                 socket.emit('join-room', { roomID: roomID, playerName: emriIm }); 
                 shfaqOverlay(id); 
+            }
         }
+
         function shfaqOverlay(id) {
             document.getElementById('room-overlay').style.display = "flex";
             document.getElementById('big-room-id').innerText = id;
@@ -111,18 +108,22 @@
         });
 
         socket.on('player-count', (count) => {
-            if(count >= 2) document.getElementById('btn-start-game').style.display = "block";
+            if(count >= 2) {
+                document.getElementById('btn-start-game').style.display = "block";
+                document.getElementById('wait-msg').innerText = "Shoku u lidh! Mund ta nisni.";
+            }
         });
 
-        function nisLojen() { socket.emit('start-game-signal', { roomID, starterId: socket.id }); }
+        function nisLojen() { 
+            socket.emit('start-game-signal', { roomID: roomID, starterId: socket.id }); 
+        }
 
         socket.on('game-started', (data) => {
             document.getElementById('room-overlay').style.display = "none";
             document.getElementById('main-toka').style.display = "flex";
             
-            eshteRadhaIme = (socket.id === data.currentTurn);
-            // NESE E NIS ME 11 (Admin), S'MUND TE MARRESH PA HEDHUR NJEHER
-            mundTeMerrLeter = eshteRadhaIme ? false : false; 
+            eshteRadhaIme = (socket.id === data.starterId);
+            mundTeMerrLeter = !eshteRadhaIme; 
 
             filloLoje(eshteRadhaIme);
             ndryshoStatusin();
@@ -130,20 +131,20 @@
 
         socket.on('ndrro-radhen', (data) => {
             eshteRadhaIme = (socket.id === data.nextTurn);
-            mundTeMerrLeter = eshteRadhaIme; // Kur vjen radha, lojtari duhet te marre leter
+            mundTeMerrLeter = eshteRadhaIme;
             ndryshoStatusin();
         });
 
         function ndryshoStatusin() {
             const s = document.getElementById('status-bar');
-            const opName = document.getElementById('op-name').innerText;
-            s.innerText = eshteRadhaIme ? "RADHA JOTE 🟢" : "RADHA E " + opName.toUpperCase() + " 🔴";
+            const opLabel = document.getElementById('op-name').innerText;
+            s.innerText = eshteRadhaIme ? "RADHA JOTE 🟢" : "RADHA E " + opLabel.toUpperCase() + " 🔴";
             s.style.background = eshteRadhaIme ? "#05c46b" : "#2c2c2e";
         }
 
         function filloLoje(uneFilloj) {
             dora = [{ v: 'X', s: '🃏', color: 'black', isXhoker: true }];
-            let limit = uneFilloj ? 10 : 9; // Fillojme me 11 per adminin, 10 per tjetrin
+            let limit = uneFilloj ? 10 : 9; 
             for(let i=0; i<limit; i++) shtoLeter();
             
             const jv = vlerat[Math.floor(Math.random()*vlerat.length)];
@@ -173,13 +174,11 @@
                 handDiv.appendChild(c);
             });
             socket.emit('update-card-count', { roomID, count: dora.length });
-            // Butoni Jackpot shfaqet vetem nese i ke 10 letra (duhet te marresh te 11-ten per mbyllje)
             document.getElementById('btn-jackpot').style.display = (dora.length === 10 && eshteRadhaIme && mundTeMerrLeter) ? "block" : "none";
         }
 
         function merrLeter() {
-            if(!eshteRadhaIme) return alert("Prit radhën!");
-            if(!mundTeMerrLeter) return alert("Hidh një letër!");
+            if(!eshteRadhaIme || !mundTeMerrLeter) return;
             shtoLeter();
             mundTeMerrLeter = false;
             updateUI();
@@ -187,7 +186,6 @@
 
         function hidhLetren(index) {
             if(!eshteRadhaIme) return alert("Nuk e ke radhën!");
-            // Nese admini ka 11 letra, e lejojme te hedhe. Perndryshe duhet te marre.
             if(mundTeMerrLeter && dora.length < 11) return alert("Merr letër në stivë!");
             if(dora[index].isXhoker) return alert("Xhokeri nuk hidhet!");
             
@@ -208,7 +206,7 @@
             if(dora.length === 10 && eshteRadhaIme && mundTeMerrLeter) {
                 dora.push(jackpotLeter);
                 document.getElementById('jackpot-card').style.display = "none";
-                mundTeMerrLeter = false; // E mori letren e radhes
+                mundTeMerrLeter = false;
                 updateUI();
             }
         }
@@ -238,9 +236,8 @@
 
         function mbyllLoje() {
             if(dora.length === 10) alert("URIME! MBYLLJE ME 71 PIKË.");
-            else alert("Duhet t'i kesh 10 letra të lidhura!");
+            else alert("Duhet t'i kesh 10 letra!");
         }
     </script>
 </body>
 </html>
-
