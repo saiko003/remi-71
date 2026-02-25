@@ -13,6 +13,10 @@ const io = new Server(server, {
     }
 });
 
+// Lista për Jackpot-in e përbashkët
+const simbolet = ['♥', '♦', '♣', '♠'];
+const vlerat = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
 console.log("Duke ndezur motorët e lojës Remi 71...");
 
 io.on("connection", (socket) => {
@@ -20,14 +24,12 @@ io.on("connection", (socket) => {
 
     // 1. Futja në dhomë me Emër
     socket.on("join-room", (data) => {
-        // data: { roomID, playerName }
         const { roomID, playerName } = data;
         socket.join(roomID);
-        socket.playerName = playerName; // Ruajmë emrin në memorien e socket-it
+        socket.playerName = playerName; 
 
         const clients = Array.from(io.sockets.adapter.rooms.get(roomID) || []);
         
-        // Kriojmë një listë me emrat e lojtarëve në dhomë
         const players = clients.map(id => {
             const s = io.sockets.sockets.get(id);
             return { id: id, name: s ? s.playerName : "Lojtar" };
@@ -35,19 +37,23 @@ io.on("connection", (socket) => {
 
         console.log(`Dhoma: ${roomID} | Lojtarë: ${players.length} | Emri: ${playerName}`);
         
-        // Dërgojmë numrin e lojtarëve dhe listën e emrave
         io.to(roomID).emit("player-count", players.length);
         io.to(roomID).emit("update-players", players);
     });
 
-    // 2. Nisja e lojës dhe caktimi i radhës së parë
+    // 2. Nisja e lojës (Shtuar vetëm variabla e Jackpot-it që të jetë e njëjtë)
     socket.on("start-game-signal", (data) => {
-        // Ai që shtyp butonin 'Nis Lojën' e ka radhën i pari (StarterId)
+        const jv = vlerat[Math.floor(Math.random() * vlerat.length)];
+        const js = simbolet[Math.floor(Math.random() * simbolet.length)];
+        const jackpot = { v: jv, s: js, color: (js === '♥' || js === '♦' ? 'red' : 'black') };
+
         console.log(`Loja po nis në dhomën: ${data.roomID}`);
         
+        // Dërgojmë saktësisht ato që pret kodi yt + jackpot-in e ri
         io.to(data.roomID).emit("game-started", { 
             starterId: data.starterId,
-            currentTurn: data.starterId // Personi që e nisi ka radhën
+            currentTurn: data.starterId,
+            jackpot: jackpot 
         });
     });
 
@@ -61,10 +67,8 @@ io.on("connection", (socket) => {
 
     // 4. Hedhja e letrës dhe Kalimi i Radhës automatik
     socket.on("hidh-leter", (data) => {
-        // data: { roomID, leter }
         socket.to(data.roomID).emit("leter-e-hedhur", data.leter);
         
-        // Gjejmë kush e ka radhën tjetër
         const clients = Array.from(io.sockets.adapter.rooms.get(data.roomID) || []);
         const nextPlayer = clients.find(id => id !== socket.id);
         
