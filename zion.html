@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>REMI 71 ONLINE</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        :root { --red: #ff3b30; --gold: #ffcc00; --felt: #076324; --green: #34c759; }
+        body { 
+            font-family: -apple-system, system-ui; background: #000; color: white; margin: 0; 
+            height: 100vh; display: flex; flex-direction: row; overflow: hidden;
+        }
+        /* Detyrim Landscape */
+        @media screen and (orientation: portrait) { #rotate { display: flex; } }
+        #rotate { display: none; position: fixed; inset: 0; background: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
+
+        .table { 
+            flex-grow: 1; background: radial-gradient(circle, var(--felt) 0%, #032d10 100%); 
+            border-radius: 40px; margin: 5px; position: relative; border: 3px solid #043d16;
+        }
+        .side-panel { width: 130px; background: #1c1c1e; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+        
+        .card { 
+            width: 50px; height: 75px; background: #fff; border-radius: 6px; color: black; 
+            display: flex; flex-direction: column; justify-content: space-between; 
+            padding: 5px; font-weight: 700; font-size: 12px; position: relative;
+        }
+        .card.red { color: var(--red); }
+        .card.linked { border: 2px solid var(--green); box-shadow: 0 0 10px var(--green); }
+        .card.xhoker { background: var(--gold); }
+
+        .hand { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
+        .ai-hand { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: -20px; }
+        .card-back { width: 30px; height: 45px; background: #2c2c2e; border: 1px solid white; border-radius: 4px; }
+
+        .deck-area { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); }
+        .stiva { width: 70px; height: 50px; background: #111; border: 1px solid white; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 10px; z-index: 2; position: relative; }
+        .jackpot { width: 45px; height: 65px; background: white; border: 2px solid var(--gold); border-radius: 4px; margin-top: -20px; margin-left: 10px; color: black; display: flex; align-items: flex-end; justify-content: center; font-size: 10px; }
+
+        .toka { position: absolute; inset: 0; pointer-events: none; }
+        button { padding: 12px; border: none; border-radius: 10px; background: #3a3a3c; color: white; font-weight: bold; font-size: 10px; }
+        .status { font-size: 10px; color: var(--gold); text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="rotate"><h2>🔄 Ktheje telefonin anash</h2></div>
+
+<div class="table">
+    <div class="ai-hand" id="ai-hand"></div>
+    <div class="deck-area" onclick="merrLeter()">
+        <div class="stiva">REMI</div>
+        <div id="jackpot-area" class="jackpot"></div>
+    </div>
+    <div id="toka" class="toka"></div>
+    <div class="hand" id="my-hand"></div>
+</div>
+
+<div class="side-panel">
+    <div class="status" id="status">Shtyp ONLINE</div>
+    <button onclick="krijoDhomen()" style="background: var(--green)">KRIJO</button>
+    <button onclick="bashkohuDhomen()" style="background: var(--ios-blue)">BASHKOHU</button>
+    <hr style="width:100%; border:0.5px solid #333">
+    <button onclick="renditSipasSimbolit()">SIMBOLI</button>
+    <button onclick="renditSipasNumrit()">NUMRI</button>
+    <button id="btn-mbyll" onclick="mbyllLoje()">MBYLL</button>
+</div>
+
+<script>
+    const socket = io("https://remi-71-server.onrender.com"); // Ky do jetë linku i serverit tënd
+    let roomID = "";
+    let dora = [], stiva = [], toka = [], jackpot = null;
+    const vlerat = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+    // --- LOGJIKA ONLINE ---
+    function krijoDhomen() {
+        roomID = Math.floor(1000 + Math.random() * 9000);
+        socket.emit('krijo', roomID);
+        document.getElementById('status').innerText = "KODI: " + roomID;
+    }
+
+    function bashkohuDhomen() {
+        roomID = prompt("Shkruaj kodin e shokut:");
+        if(roomID) socket.emit('bashkohu', roomID);
+    }
+
+    socket.on('fillo', (data) => {
+        dora = data.dora;
+        jackpot = data.jackpot;
+        document.getElementById('status').innerText = "Loja Filloi!";
+        updateUI();
+    });
+
+    socket.on('mori-leter', () => { /* AI ose shoku mori leter */ });
+
+    socket.on('hodhi-leter', (leter) => {
+        toka.push(leter);
+        renderToka();
+        document.getElementById('status').innerText = "Rradha jote!";
+    });
+
+    // --- LOGJIKA E LOJES ---
+    function updateUI() {
+        const h = document.getElementById('my-hand');
+        h.innerHTML = "";
+        dora.forEach((c, i) => {
+            const div = document.createElement('div');
+            div.className = `card ${c.color} ${isLinked(i) ? 'linked' : ''} ${c.v==='XH'?'xhoker':''}`;
+            div.innerHTML = `<div>${c.v}</div><div style="align-self:center; font-size:20px">${c.s}</div>`;
+            div.onclick = () => hidhLetren(i);
+            h.appendChild(div);
+        });
+        document.getElementById('jackpot-area').innerText = jackpot.v + jackpot.s;
+    }
+
+    function hidhLetren(i) {
+        if(dora.length <= 10) return;
+        let l = dora.splice(i, 1)[0];
+        socket.emit('hidh', { room: roomID, leter: l });
+        toka.push(l);
+        renderToka();
+        updateUI();
+        document.getElementById('status').innerText = "Prisni shokun...";
+    }
+
+    function merrLeter() {
+        if(dora.length > 10) return;
+        socket.emit('merr', roomID);
+        // Serveri do ktheje letren e re
+    }
+
+    function renderToka() {
+        const t = document.getElementById('toka');
+        t.innerHTML = "";
+        toka.forEach(l => {
+            const d = document.createElement('div');
+            d.style.position = "absolute";
+            d.style.left = "50%"; d.style.top = "50%";
+            d.className = `card ${l.color}`;
+            d.style.transform = `translate(-50%, -50%) rotate(${Math.random()*40-20}deg)`;
+            d.innerHTML = l.v + l.s;
+            t.appendChild(d);
+        });
+    }
+
+    function isLinked(i) { /* logjika e kontrollit */ return false; }
+    function renditSipasSimbolit() { dora.sort((a,b)=>a.s.localeCompare(b.s)); updateUI(); }
+</script>
+</body>
+</html>
