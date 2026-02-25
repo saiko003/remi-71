@@ -84,15 +84,19 @@
 
         function krijoDhomen() {
             roomID = Math.floor(1000 + Math.random() * 9000);
-            socket.emit('join-room', { roomID, playerName: emriIm });
+            // Sigurohu që po dërgon playerName si objekt!
+            socket.emit('join-room', { roomID: roomID, playerName: emriIm });
             shfaqOverlay(roomID);
         }
 
-        function futuDhomen() {
-            const id = prompt("Kodi:");
-            if(id) { roomID = id; socket.emit('join-room', { roomID, playerName: emriIm }); shfaqOverlay(id); }
+        ffunction futuDhomen() {
+            const id = prompt("Shkruaj kodin 4-shifror:");
+            if(id) { 
+                roomID = id; 
+                // Sigurohu që po dërgon playerName si objekt!
+                socket.emit('join-room', { roomID: roomID, playerName: emriIm }); 
+                shfaqOverlay(id); 
         }
-
         function shfaqOverlay(id) {
             document.getElementById('room-overlay').style.display = "flex";
             document.getElementById('big-room-id').innerText = id;
@@ -239,3 +243,4 @@
     </script>
 </body>
 </html>
+
