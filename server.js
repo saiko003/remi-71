@@ -3,7 +3,7 @@ const { Server } = require("socket.io");
 
 const server = http.createServer((req, res) => {
     res.writeHead(200);
-    res.end("Serveri i REMI 71 eshte LIVE! (Versioni i Sinkronizuar)");
+    res.end("Serveri i REMI 71 - Versioni Profesional me Emra dhe Radhë");
 });
 
 const io = new Server(server, {
@@ -16,50 +16,69 @@ const io = new Server(server, {
 console.log("Duke ndezur motorët e lojës Remi 71...");
 
 io.on("connection", (socket) => {
-    console.log("Lojtari u lidh: " + socket.id);
+    console.log("Lojtar i ri u lidh: " + socket.id);
 
-    // 1. Futja në dhomë
-    socket.on("join-room", (roomID) => {
+    // 1. Futja në dhomë me Emër
+    socket.on("join-room", (data) => {
+        // data: { roomID, playerName }
+        const { roomID, playerName } = data;
         socket.join(roomID);
-        const clients = io.sockets.adapter.rooms.get(roomID);
-        const numPlayers = clients ? clients.size : 0;
+        socket.playerName = playerName; // Ruajmë emrin në memorien e socket-it
+
+        const clients = Array.from(io.sockets.adapter.rooms.get(roomID) || []);
         
-        console.log(`Dhoma: ${roomID} | Lojtarë: ${numPlayers}`);
+        // Kriojmë një listë me emrat e lojtarëve në dhomë
+        const players = clients.map(id => {
+            const s = io.sockets.sockets.get(id);
+            return { id: id, name: s ? s.playerName : "Lojtar" };
+        });
+
+        console.log(`Dhoma: ${roomID} | Lojtarë: ${players.length} | Emri: ${playerName}`);
         
-        // Njofton të gjithë në dhomë për numrin e lojtarëve
-        io.to(roomID).emit("player-count", numPlayers);
+        // Dërgojmë numrin e lojtarëve dhe listën e emrave
+        io.to(roomID).emit("player-count", players.length);
+        io.to(roomID).emit("update-players", players);
     });
 
-    // 2. Nisja e lojës (Sinjali nga kushdo që shtyp butonin)
+    // 2. Nisja e lojës dhe caktimi i radhës së parë
     socket.on("start-game-signal", (data) => {
-        // data: { roomID, starterId }
-        console.log(`Loja po nis në dhomën: ${data.roomID} nga lojtari: ${data.starterId}`);
+        // Ai që shtyp butonin 'Nis Lojën' e ka radhën i pari (StarterId)
+        console.log(`Loja po nis në dhomën: ${data.roomID}`);
         
-        // Dërgojmë starterId te të gjithë që kodi .html ta dijë kush merr 11 letra
-        io.to(data.roomID).emit("game-started", { starterId: data.starterId });
+        io.to(data.roomID).emit("game-started", { 
+            starterId: data.starterId,
+            currentTurn: data.starterId // Personi që e nisi ka radhën
+        });
     });
 
     // 3. Sinkronizimi i letrave të kundërshtarit
     socket.on("update-card-count", (data) => {
-        // data: { roomID, count }
-        // Ky sinjal i tregon shokut sa letra ka ky lojtar në dorë
         socket.to(data.roomID).emit("opponent-card-count", {
             id: socket.id,
             count: data.count
         });
     });
 
-    // 4. Hedhja e letrës në tokë
+    // 4. Hedhja e letrës dhe Kalimi i Radhës automatik
     socket.on("hidh-leter", (data) => {
         // data: { roomID, leter }
         socket.to(data.roomID).emit("leter-e-hedhur", data.leter);
-        console.log(`Letër u hodh në dhomën: ${data.roomID}`);
+        
+        // Gjejmë kush e ka radhën tjetër
+        const clients = Array.from(io.sockets.adapter.rooms.get(data.roomID) || []);
+        const nextPlayer = clients.find(id => id !== socket.id);
+        
+        if (nextPlayer) {
+            io.to(data.roomID).emit("ndrro-radhen", { nextTurn: nextPlayer });
+            console.log(`Radha i kaloi lojtarit: ${nextPlayer}`);
+        }
     });
 
-    // 5. Mbyllja e lojës (71)
+    // 5. Mbyllja e lojës
     socket.on("mbyll-lojen", (data) => {
+        const s = io.sockets.sockets.get(socket.id);
         io.to(data.roomID).emit("loja-mbaroi", {
-            fituesi: socket.id,
+            fituesi: s ? s.playerName : "Dikush",
             lloji: data.lloji
         });
     });
@@ -83,6 +102,6 @@ io.on("connection", (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log("-----------------------------------------");
-    console.log(`REMI 71 SERVERI GATI - Port: ${PORT}`);
+    console.log(`REMI 71 SERVERI PRO GATI - Port: ${PORT}`);
     console.log("-----------------------------------------");
 });
